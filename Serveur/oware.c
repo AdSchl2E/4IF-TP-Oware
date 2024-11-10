@@ -4,7 +4,7 @@
 #include "oware.h"
 
 
-// Fonction principale
+/*// Fonction principale
 int main() {
     int board[N_PITS];
     int total_seeds_collected[N_PLAYERS];
@@ -12,7 +12,7 @@ int main() {
     int choice = 0;
     int winner = 0;
 
-    init(board, total_seeds_collected);
+    initBoard(board, total_seeds_collected);
     displayBoard(board, total_seeds_collected); // Send message to all clients
 
     while (!checkGameEnd(board, total_seeds_collected)) {
@@ -36,10 +36,10 @@ int main() {
     }
 
     return 0;
-}
+}*/
 
 // Initialisation du tableau
-void init(int board[], int total_seeds_collected[]) {
+void initBoard(int board[], int total_seeds_collected[]) {
     for (int i = 0; i < N_PITS; i++) {
         board[i] = N_SEEDS;
     }
@@ -49,7 +49,7 @@ void init(int board[], int total_seeds_collected[]) {
 }
 
 // Affichage du tableau
-void displayBoard(int board[], int seeds_collected[]) {
+void displayBoard(int board[], int total_seeds_collected[]) {
     for (int i = N_PITS - 1; i >= N_PITS / 2; i--) {
         printf("%d ", board[i]);
     }
@@ -59,8 +59,8 @@ void displayBoard(int board[], int seeds_collected[]) {
     }
     printf("\n");
 
-    printf("Graines capturées par le joueur 1: %d\n", seeds_collected[0]);
-    printf("Graines capturées par le joueur 2: %d\n", seeds_collected[1]);
+    printf("Graines capturées par le joueur 1: %d\n", total_seeds_collected[0]);
+    printf("Graines capturées par le joueur 2: %d\n", total_seeds_collected[1]);
     printf("\n");
 }
 
@@ -72,7 +72,7 @@ int makeMove(int board[], int choice, int player, int total_seeds_collected[]) {
     int seeds_on_board[N_PLAYERS];
     seeds_on_board[0] = 0;
     seeds_on_board[1] = 0;
-
+    printf("Le joueur %d a joué la case %d\n", player + 1, choice);
     // Distribution des graines
     board[choice] = 0;
     while (n_seeds > 0) {

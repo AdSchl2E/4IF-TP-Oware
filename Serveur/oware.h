@@ -7,13 +7,13 @@
 #define WINNING_SEEDS 25
 #define NUM_SEEDS_DRAW 24
 
-void init(int tab[], int graines_gagnees[]);
-void displayBoard(int tab[], int graines_gagnees[]);
-int makeMove(int tab[], int choix, int joueur);
-int checkGameEnd(int tab[], int graines_gagnees[]);
-int getWinner(int graines_gagnees[]);
-int playerChoice(int tab[], int joueur);
-int computerChoice(int tab[]);
-int randomChoice(int tab[]);
+void initBoard(int board[], int total_seeds_collected[]);
+void displayBoard(int board[], int seeds_collected[]);
+int makeMove(int board[], int choice, int player, int total_seeds_collected[]);
+int checkGameEnd(int board[], int total_seeds_collected[]);
+int getWinner(int total_seeds_collected[]);
+int playerChoice(int board[], int player);
+int computerChoice(int board[]);
+int randomChoice(int board[]);
 
 #endif /* guard */
