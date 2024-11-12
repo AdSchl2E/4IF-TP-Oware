@@ -5,11 +5,12 @@
 
 #include <winsock2.h>
 
-#elif defined (linux)
+#elif defined __linux__
 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <sys/select.h>
 #include <arpa/inet.h>
 #include <unistd.h> /* close */
 #include <netdb.h> /* gethostbyname */

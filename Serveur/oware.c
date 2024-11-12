@@ -65,7 +65,7 @@ void displayBoard(int board[], int total_seeds_collected[]) {
 }
 
 // Jouer un coup
-int makeMove(int board[], int choice, int player, int total_seeds_collected[]) {
+void makeMove(int board[], int choice, int player, int total_seeds_collected[]) {
     int n_seeds = board[choice];
     int seeds_collected = 0;
     int opponent = 1 - player;
@@ -90,7 +90,7 @@ int makeMove(int board[], int choice, int player, int total_seeds_collected[]) {
     }
     if (seeds_on_board[0] == 0 || seeds_on_board[1] == 0) {
         printf("Grand Slam\n");
-        return 0;
+        return;
     }
 
     // Vérifier pour capture (en remontant les cases, si elles appartiennent à l’adversaire)
@@ -101,7 +101,6 @@ int makeMove(int board[], int choice, int player, int total_seeds_collected[]) {
     }
 
     total_seeds_collected[player] += seeds_collected;
-    return seeds_collected;
 }
 
 // Fin de jeu

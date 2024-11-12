@@ -41,10 +41,22 @@ typedef struct in_addr IN_ADDR;
 #define CRLF        "\r\n"
 #define PORT         1977
 #define MAX_CLIENTS     100
+#define MAX_GAMES       100
 
 #define BUF_SIZE    1024
 
 #include "client2.h"
+#include "oware.h"
+
+typedef struct
+{
+    Client *player1;
+    Client *player2;
+    int board[N_PITS];
+    int total_seeds_collected[N_PLAYERS];
+    int turn;
+    int moves[MAX_MOVES];
+}Game;
 
 static void init(void);
 static void end(void);
