@@ -50,12 +50,13 @@ typedef struct in_addr IN_ADDR;
 
 typedef struct
 {
-    Client *player1;
-    Client *player2;
-    int board[N_PITS];
-    int total_seeds_collected[N_PLAYERS];
+    Client player1;
+    Client player2;
+    int *board;
+    int *total_seeds_collected;
     int turn;
-    int moves[MAX_MOVES];
+    int *moves;
+    int finished;
 }Game;
 
 static void init(void);
@@ -68,7 +69,6 @@ static void write_client(SOCKET sock, const char *buffer);
 static void send_message_to_all_clients(Client *clients, Client client, int actual, const char *buffer, char from_server);
 static void remove_client(Client *clients, int to_remove, int *actual);
 static void clear_clients(Client *clients, int actual);
-static void displayBoardToPlayers(int board[], int total_seeds_collected[], Client *players[2]);
-static int askForPlayerChoice(int board[] ,Client *player);
+static void displayBoardToPlayer(Game game);
 
 #endif /* guard */
