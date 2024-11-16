@@ -144,7 +144,7 @@ static void app(void)
                   remove_client(clients, i, &nClients);
                   strncpy(buffer, client.name, BUF_SIZE - 1);
                   strncat(buffer, " disconnected !", BUF_SIZE - strlen(buffer) - 1);
-                  send_message_to_all_clients(clients, client, nClients, buffer, 1);
+                  send_message_to_all_clients(clients, client, nClients, buffer, 1, games, nGames);
                }
                else
                {
@@ -154,81 +154,83 @@ static void app(void)
                      if (!games[j].finished && ( games[j].player1.sock == client.sock || games[j].player2.sock == client.sock ))
                      {
                         clientInGame = 1;
-                        printf("clientInGame: %d\n", clientInGame);
-                     }
+                        //printf("clientInGame: %d\n", clientInGame);
 
-                     printf("turn : %d, turn % 2: %d\n", games[j].turn, games[j].turn % 2);
-                     printf("client.name: %s\n", client.name); 
-                     printf("playerToPlay: %s\n", (games[j].turn % 2) == 0 ? games[j].player1.name : games[j].player2.name);
-                     printf("client.sock: %d\n", client.sock); 
-                     printf("(games[j].turn % 2) == 0 ? games[j].player1.sock : games[j].player2.sock : %d\n", (games[j].turn % 2) == 0 ? games[j].player1.sock : games[j].player2.sock);
+                        //printf("turn : %d, turn % 2: %d\n", games[j].turn, games[j].turn % 2);
+                        //printf("client.name: %s\n", client.name); 
+                        //printf("playerToPlay: %s\n", (games[j].turn % 2) == 0 ? games[j].player1.name : games[j].player2.name);
+                        //printf("client.sock: %d\n", client.sock); 
+                        //printf("(games[j].turn % 2) == 0 ? games[j].player1.sock : games[j].player2.sock : %d\n", (games[j].turn % 2) == 0 ? games[j].player1.sock : games[j].player2.sock);
 
-                     if (!games[j].finished && client.sock == ((games[j].turn % 2) == 0 ? games[j].player1.sock : games[j].player2.sock))
-                     {
-                        //debug
-
-                        printf("client.sock: %d\n", client.sock); 
-                        printf("(games[j].turn % 2) == 0 ? games[j].player1.sock : games[j].player2.sock : %d\n", (games[j].turn % 2) == 0 ? games[j].player1.sock : games[j].player2.sock);
-
-                        printf("playerToPlay: %s\n", (games[j].turn % 2) == 0 ? games[j].player1.name : games[j].player2.name);
-                        printf("player1: %s\n", games[j].player1.name);
-                        printf("player2: %s\n", games[j].player2.name);
-
-                        int choice = atoi(buffer);
-                        // if (choice < 0 || choice >= N_PITS / 2 || games[j].board[choice + games[j].turn % 2 == 0 ? 0 : N_PITS / 2] == 0)
-                        // {
-                        //    write_client(client.sock, "Invalid choice, please choose a non-empty pit between 0 and 5: ");
-                        //    break;
-                        // }
-                        printf("choice: %d\n", choice);
-                        printf("choice: %d\n", choice + ((games[j].turn % 2) * (N_PITS / 2)));  
-                        games[j].moves[games[j].turn] = choice + ((games[j].turn % 2) * (N_PITS / 2));
-
-                        makeMove(
-                           games[j].board, 
-                           games[j].moves[games[j].turn],
-                           games[j].turn % 2,
-                           games[j].total_seeds_collected
-                        );
-
-                        if (checkGameEnd(games[j].board, games[j].total_seeds_collected))
+                        if (!games[j].finished && client.sock == ((games[j].turn % 2) == 0 ? games[j].player1.sock : games[j].player2.sock))
                         {
-                           games[j].finished = 1;
-                           int winner = getWinner(games[j].total_seeds_collected);
-                           if (winner == 0)
+                           //debug
+
+                           //printf("client.sock: %d\n", client.sock); 
+                           //printf("(games[j].turn % 2) == 0 ? games[j].player1.sock : games[j].player2.sock : %d\n", (games[j].turn % 2) == 0 ? games[j].player1.sock : games[j].player2.sock);
+
+                           //printf("playerToPlay: %s\n", (games[j].turn % 2) == 0 ? games[j].player1.name : games[j].player2.name);
+                           //printf("player1: %s\n", games[j].player1.name);
+                           //printf("player2: %s\n", games[j].player2.name);
+
+                           int choice = atoi(buffer);
+                           if (choice < 0 || choice >= N_PITS / 2 || games[j].board[choice + games[j].turn % 2 == 0 ? 0 : N_PITS / 2] == 0)
                            {
-                              write_client(games[j].player1.sock, "You won!\n");
-                              write_client(games[j].player2.sock, "You lost!\n");
+                              write_client(client.sock, "Invalid choice, please choose a non-empty pit between 0 and 5: ");
+                              break;
                            }
-                           else if (winner == 1)
+                           //printf("choice: %d\n", choice);
+                           //printf("choice: %d\n", choice + ((games[j].turn % 2) * (N_PITS / 2)));  
+                           games[j].moves[games[j].turn] = choice + ((games[j].turn % 2) * (N_PITS / 2));
+
+                           makeMove(
+                              games[j].board, 
+                              games[j].moves[games[j].turn],
+                              games[j].turn % 2,
+                              games[j].total_seeds_collected
+                           );
+
+                           if (checkGameEnd(games[j].board, games[j].total_seeds_collected))
                            {
-                              write_client(games[j].player1.sock, "You lost!\n");
-                              write_client(games[j].player2.sock, "You won!\n");
+                              games[j].finished = 1;
+                              int winner = getWinner(games[j].total_seeds_collected);
+                              if (winner == 0)
+                              {
+                                 write_client(games[j].player1.sock, "You won!\n");
+                                 write_client(games[j].player2.sock, "You lost!\n");
+                              }
+                              else if (winner == 1)
+                              {
+                                 write_client(games[j].player1.sock, "You lost!\n");
+                                 write_client(games[j].player2.sock, "You won!\n");
+                              }
+                              else
+                              {
+                                 write_client(games[j].player1.sock, "Draw!\n");
+                                 write_client(games[j].player2.sock, "Draw!\n");
+                              }
+                              break;
                            }
-                           else
-                           {
-                              write_client(games[j].player1.sock, "Draw!\n");
-                              write_client(games[j].player2.sock, "Draw!\n");
-                           }
+
+                           displayBoardToPlayer(games[j]);
+
+                           games[j].turn++;
+
+                           printf("Au tour de %s\n", games[j].turn % 2 == 0 ? games[j].player1.name : games[j].player2.name);
+
+                           write_client(games[j].turn % 2 == 0 ? games[j].player1.sock : games[j].player2.sock, "Your opponent played : ");
+                           write_client(games[j].turn % 2 == 0 ? games[j].player1.sock : games[j].player2.sock, games[j].moves[games[j].turn - 1]);
+                           write_client(games[j].turn % 2 == 0 ? games[j].player1.sock : games[j].player2.sock, "\n");
+                        
+                           displayBoardToPlayer(games[j]);
+
+                           write_client(games[j].turn % 2 == 0 ? games[j].player1.sock : games[j].player2.sock, "Choose a pit to play (0-5): ");
                            break;
                         }
-
-                        displayBoardToPlayer(games[j]);
-
-                        games[j].turn++;
-
-                        printf("Au tour de %s\n", games[j].turn % 2 == 0 ? games[j].player1.name : games[j].player2.name);
-
-                        write_client(games[j].turn % 2 == 0 ? games[j].player1.sock : games[j].player2.sock, "Your opponent played!\n");
-                     
-                        displayBoardToPlayer(games[j]);
-
-                        write_client(games[j].turn % 2 == 0 ? games[j].player1.sock : games[j].player2.sock, "Choose a pit to play (0-5): ");
-                        break;
-                     }
-                     else
-                     {
-                        write_client(client.sock, "It's not your turn!\n");
+                        else
+                        {
+                           write_client(client.sock, "It's not your turn!\n");
+                        }
                      }
                   }
 
@@ -248,7 +250,7 @@ static void app(void)
                      }
                   }
                   /* challenge a player */
-                  else if (strncmp(buffer, "/challenge", 9) == 0)
+                  else if (strncmp(buffer, "/challenge", 10) == 0)
                   {
                      char *player = buffer + 11;
                      for (int j = 0; j < nClients; j++)
@@ -269,7 +271,7 @@ static void app(void)
                               remove_client(clients, j, &nClients);
                               strncpy(buffer, player, BUF_SIZE - 1);
                               strncat(buffer, " disconnected !", BUF_SIZE - strlen(buffer) - 1);
-                              send_message_to_all_clients(clients, client, nClients, buffer, 1);
+                              send_message_to_all_clients(clients, client, nClients, buffer, 1, games, nGames);
                            }
                            else {
 
@@ -389,7 +391,7 @@ static void app(void)
                   /* rewatch a game */
                   else if (strncmp(buffer, "/rewatch", 8) == 0)
                   {
-                     char *gameIndex = buffer + 8;
+                     char *gameIndex = buffer + 9;
                      Game game = games[atoi(gameIndex)];
                      if (game.finished)
                      {
@@ -409,10 +411,9 @@ static void app(void)
                      {
                         if (!games[j].finished)
                         {
-                           write_client(client.sock, j);
-                           write_client(client.sock, " : ");
+                           write_client(client.sock, "- ");
                            write_client(client.sock, games[j].player1.name);
-                           write_client(client.sock, " vs ");
+                           write_client(client.sock, " VS ");
                            write_client(client.sock, games[j].player2.name);
                            write_client(client.sock, "\n");
                         }
@@ -421,13 +422,13 @@ static void app(void)
                   /* spectate a game */
                   else if (strncmp(buffer, "/spectate", 9) == 0)
                   {
-                     char *gameIndex = buffer + 9;
+                     char *gameIndex = buffer + 10;
                      Game game = games[atoi(gameIndex)];
                      if (!game.finished)
                      {
                         write_client(client.sock, "You are spectating ");
                         write_client(client.sock, game.player1.name);
-                        write_client(client.sock, " vs ");
+                        write_client(client.sock, " VS ");
                         write_client(client.sock, game.player2.name);
                         write_client(client.sock, "\n");
                         displayBoardToPlayer(game);
@@ -436,14 +437,14 @@ static void app(void)
                   /* write a bio */
                   else if (strncmp(buffer, "/bio", 4) == 0)
                   {
-                     char *bio = buffer + 4;
+                     char *bio = buffer + 5;
                      strncpy(client.bio, bio, BUF_SIZE - 1);
                      write_client(client.sock, "Bio updated!\n");
                   }
                   /* see the bio of a player */
                   else if (strncmp(buffer, "/seebio", 7) == 0)
                   {
-                     char *player = buffer + 7;
+                     char *player = buffer + 8;
                      for (int j = 0; j < nClients; j++)
                      {
                         if (strcmp(clients[j].name, player) == 0)
@@ -467,7 +468,7 @@ static void app(void)
                   else
                   {
                      /* message for all */
-                     send_message_to_all_clients(clients, client, nClients, buffer, 0);
+                     send_message_to_all_clients(clients, client, nClients, buffer, 0, games, nGames);
                   }               
                }
                break;
@@ -497,23 +498,30 @@ static void remove_client(Client *clients, int to_remove, int *nClients)
    (*nClients)--;
 }
 
-static void send_message_to_all_clients(Client *clients, Client sender, int nClients, const char *buffer, char from_server)
+static void send_message_to_all_clients(Client *clients, Client sender, int nClients, const char *buffer, char from_server, Game *games, int nGames)
 {
    int i = 0;
    char message[BUF_SIZE];
    message[0] = 0;
    for(i = 0; i < nClients; i++)
    {
-      /* we don't send message to the sender */
-      if(sender.sock != clients[i].sock)
+      /* we don't send message to the sender and to player in game */
+      for (int j = 0; j < nGames; j++)
       {
-         if(from_server == 0)
+         if (!games[j].player1.sock == clients[i].sock && !games[j].player2.sock == clients[i].sock)
          {
-            strncpy(message, sender.name, BUF_SIZE - 1);
-            strncat(message, " : ", sizeof message - strlen(message) - 1);
+            if (from_server == 0 && clients[i].sock != sender.sock)
+            {
+               strcat(message, sender.name);
+               strcat(message, " : ");
+            }
+            strcat(message, buffer);
+            if (from_server == 0)
+            {
+               strcat(message, "\n");
+            }
+            write_client(clients[i].sock, message);
          }
-         strncat(message, buffer, sizeof message - strlen(message) - 1);
-         write_client(clients[i].sock, message);
       }
    }
 }
