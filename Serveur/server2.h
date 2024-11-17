@@ -42,6 +42,7 @@ typedef struct in_addr IN_ADDR;
 #define PORT         1977
 #define MAX_CLIENTS     100
 #define MAX_GAMES       100
+#define MAX_SPECTATORS  10
 
 #define BUF_SIZE    1024
 
@@ -50,14 +51,16 @@ typedef struct in_addr IN_ADDR;
 
 typedef struct
 {
-    Client player1;
-    Client player2;
+    Client *player1;
+    Client *player2;
     int *board;
     int *total_seeds_collected;
     int turn;
     int *moves;
     int finished;
-}Game;
+    Client **spectators;
+    int nSpectators;
+} Game;
 
 static void init(void);
 static void end(void);
@@ -66,9 +69,11 @@ static int init_connection(void);
 static void end_connection(int sock);
 static int read_client(SOCKET sock, char *buffer);
 static void write_client(SOCKET sock, const char *buffer);
-static void send_message_to_all_clients(Client *clients, Client client, int actual, const char *buffer, char from_server, Game *games, int nGames);
+static void send_message_to_all_clients(Client *clients, Client *client, int actual, const char *buffer, char from_server);
 static void remove_client(Client *clients, int to_remove, int *actual);
 static void clear_clients(Client *clients, int actual);
-static void displayBoardToPlayer(Game game);
+static void displayBoardToPlayer(Game *game);
+static void displayBoardToSpectator(Game *game);
+static void replay(Client *client, Game *game);  
 
 #endif /* guard */

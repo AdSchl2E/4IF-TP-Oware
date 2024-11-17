@@ -8,6 +8,11 @@ typedef struct
    SOCKET sock;
    char name[BUF_SIZE];
    char bio[BUF_SIZE];
-}Client;
+   int playing;
+   int spectating;
+   int reviewing;
+   int receiveChallenge;
+   SOCKET challenger;
+} Client;
 
 #endif /* guard */
