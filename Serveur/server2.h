@@ -31,6 +31,8 @@ typedef struct in_addr IN_ADDR;
 #define COLOR_YELLOW "\033[33m"
 #define COLOR_BLUE "\033[34m"
 #define COLOR_CYAN "\033[36m"
+#define COLOR_MAGENTA "\033[35m"
+#define COLOR_BOLD "\033[1m"
 
 #else
 
@@ -41,6 +43,7 @@ typedef struct in_addr IN_ADDR;
 #define CRLF        "\r\n"
 #define PORT         1977
 #define MAX_CLIENTS     100
+#define MAX_FRIENDS     20
 #define MAX_GAMES       100
 #define MAX_SPECTATORS  10
 
@@ -60,6 +63,8 @@ typedef struct
     int finished;
     Client **spectators;
     int nSpectators;
+    int private;
+    int draw;
 } Game;
 
 static void init(void);

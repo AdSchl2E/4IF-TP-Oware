@@ -13,6 +13,7 @@ typedef struct
    int reviewing;
    int receiveChallenge;
    SOCKET challenger;
+   SOCKET* friends;
 } Client;
 
 #endif /* guard */
