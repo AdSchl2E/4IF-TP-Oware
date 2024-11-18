@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
+#include <time.h>
 
 #include "server2.h"
 #include "client2.h"
@@ -153,7 +154,7 @@ static void app(void)
          offset += sprintf(commands + offset, COLOR_CYAN);
          offset += sprintf(commands + offset, "/list : List all players\n");
          offset += sprintf(commands + offset, "/challenge <player> : Challenge a player\n");
-         offset += sprintf(commands + offset, "/challenge -p <player> : Challenge a player for a private game\n");
+         offset += sprintf(commands + offset, "/pchallenge <player> : Challenge a player for a private game\n");
          offset += sprintf(commands + offset, "/fgames : List all finished games\n");
          offset += sprintf(commands + offset, "/replay <game index> : Replay a game\n");
          offset += sprintf(commands + offset, "/games : List all unfinished games\n");
@@ -412,9 +413,9 @@ static void app(void)
                            for (int j = 0; j < clientGame->nSpectators; j++)
                            {
                               write_client(clientGame->spectators[j]->sock, message);
-                              write_client(clientGame->spectators[j]->sock, "COLOR_BOLD");
+                              write_client(clientGame->spectators[j]->sock, COLOR_BOLD);
                               write_client(clientGame->spectators[j]->sock, "You can leave the game by typing 'q'\n");
-                              write_client(clientGame->spectators[j]->sock, "COLOR_RESET");
+                              write_client(clientGame->spectators[j]->sock, COLOR_RESET);
                            }
 
                            break;
@@ -552,7 +553,7 @@ static void app(void)
 
                         write_client(clientGame->turn % 2 == 0 ? clientGame->player1->sock : clientGame->player2->sock, "Your opponent played in pit ");
                         char oppponentMove[BUF_SIZE];
-                        sprintf(oppponentMove, "%d", clientGame->moves[clientGame->turn - 1]);
+                        sprintf(oppponentMove, "%d", clientGame->moves[clientGame->turn - 1] + (clientGame->turn % 2 == 0 ? 0 : N_PITS / 2));
                         write_client(clientGame->turn % 2 == 0 ? clientGame->player1->sock : clientGame->player2->sock, oppponentMove);
                         write_client(clientGame->turn % 2 == 0 ? clientGame->player1->sock : clientGame->player2->sock, "\n");
 
@@ -717,14 +718,20 @@ static void app(void)
                               write_client(client->sock, COLOR_RESET);
                            }
                            break;
-                        }                      
+                        }  
+                        else if (j == nClients - 1)
+                        {
+                           write_client(client->sock, COLOR_RED);
+                           write_client(client->sock, "This player does not exist!\n");
+                           write_client(client->sock, COLOR_RESET);
+                        }                                                               
                      }
                   }
 
                   /* challenge a player for a private game */
-                  else if (strncmp(buffer, "/challenge -p", 12) == 0)
+                  else if (strncmp(buffer, "/pchallenge", 11) == 0)
                   {
-                     char *player = buffer + 13;
+                     char *player = buffer + 12;
 
                      for (int j = 0; j < nClients; j++)
                      {
@@ -763,8 +770,15 @@ static void app(void)
                               write_client(client->sock, COLOR_RESET);
                            }
                            break;
-                        }                      
+                        } 
+                        else if (j == nClients - 1)
+                        {
+                           write_client(client->sock, COLOR_RED);
+                           write_client(client->sock, "This player does not exist!\n");
+                           write_client(client->sock, COLOR_RESET);
+                        }
                      }
+                     break;                   
                   }
                   
                   /* list all finished games */
@@ -916,7 +930,7 @@ static void app(void)
                   else if (strncmp(buffer, "/spectate", 9) == 0)
                   {
                      // Le client peut regarder une partie en cours si elle n'est pas finie et si elle n'est pas privée
-                     // Si elle est privée, il peut regarder que si il est ami avec un des joueurs
+                     // Si elle est privée, il peut regarder que si un des joueurs est son ami
 
                      char *gameIndex = buffer + 10;
                      Game *game = &games[atoi(gameIndex)];
@@ -945,33 +959,42 @@ static void app(void)
                      }
                      else if (!game->finished && game->private)
                      {
+                        // On parcours les amis des deux joueurs pour voir si le client est ami avec un des deux
+
+                        int isFriend = 0;
                         for (int j = 0; j < MAX_FRIENDS; j++)
                         {
-                           if (client->friends[j] == game->player1->sock || client->friends[j] == game->player2->sock)
+                           if (game->player1->friends[j] == client->sock || game->player2->friends[j] == client->sock)
                            {
-                              write_client(client->sock, COLOR_BOLD);
-                              write_client(client->sock, "You are spectating ");
-                              write_client(client->sock, COLOR_RESET);
-                              write_client(client->sock, COLOR_CYAN);
-                              write_client(client->sock, game->player1->name);
-                              write_client(client->sock, COLOR_RESET);
-                              write_client(client->sock, COLOR_BOLD);
-                              write_client(client->sock, " VS ");
-                              write_client(client->sock, COLOR_RESET);
-                              write_client(client->sock, COLOR_CYAN);
-                              write_client(client->sock, game->player2->name);
-                              write_client(client->sock, COLOR_RESET);
-                              write_client(client->sock, "\n");
-                              write_client(client->sock, COLOR_BOLD);
-                              write_client(client->sock, "Type 'q' to stop spectating\n");
-                              write_client(client->sock, COLOR_RESET);
-                              game->spectators[game->nSpectators] = client;
-                              game->nSpectators++;
-                              client->spectating = 1;
+                              isFriend = 1;
                               break;
                            }
                         }
-                        if (!client->spectating)
+
+                        if (isFriend)
+                        {
+                           write_client(client->sock, COLOR_BOLD);
+                           write_client(client->sock, "You are spectating ");
+                           write_client(client->sock, COLOR_RESET);
+                           write_client(client->sock, COLOR_CYAN);
+                           write_client(client->sock, game->player1->name);
+                           write_client(client->sock, COLOR_RESET);
+                           write_client(client->sock, COLOR_BOLD);
+                           write_client(client->sock, " VS ");
+                           write_client(client->sock, COLOR_RESET);
+                           write_client(client->sock, COLOR_CYAN);
+                           write_client(client->sock, game->player2->name);
+                           write_client(client->sock, COLOR_RESET);
+                           write_client(client->sock, "\n");
+                           write_client(client->sock, COLOR_BOLD);
+                           write_client(client->sock, "Type 'q' to stop spectating\n");
+                           write_client(client->sock, "Type '/chat <message>' to chat with the players and the spectators\n");
+                           write_client(client->sock, COLOR_RESET);
+                           game->spectators[game->nSpectators] = client;
+                           game->nSpectators++;
+                           client->spectating = 1;
+                        }
+                        else if (!client->spectating)
                         {
                            write_client(client->sock, COLOR_RED);
                            write_client(client->sock, "This game is private and you are not friend with any of the players!\n");
@@ -1136,7 +1159,7 @@ static void app(void)
 
                      offset += sprintf(help + offset, "/list : List all players\n");
                      offset += sprintf(help + offset, "/challenge <player> : Challenge a player\n");
-                     offset += sprintf(help + offset, "/challenge -p <player> : Challenge a player for a private game\n");
+                     offset += sprintf(help + offset, "/pchallenge <player> : Challenge a player for a private game\n");
                      offset += sprintf(help + offset, "/fgames : List all finished games\n");
                      offset += sprintf(help + offset, "/replay <game index> : Replay a game\n");
                      offset += sprintf(help + offset, "/games : List all unfinished games\n");
@@ -1529,7 +1552,7 @@ static void replay(Client *client, Game *game)
 
       offset += sprintf(display + offset, "\n");
 
-      //Affichage des coordonnées des cases du haut
+      // Affichage des coordonnées des cases du haut
 
       offset += sprintf(display + offset, COLOR_YELLOW);
 
@@ -1548,6 +1571,8 @@ static void replay(Client *client, Game *game)
 
       // Affichage du board
 
+      offset += sprintf(display + offset, COLOR_CYAN);
+
       for (int j = N_PITS - 1; j >= N_PITS / 2; j--)
       {
          offset += sprintf(display + offset, "[ %d ] ", board[j]);
@@ -1560,7 +1585,10 @@ static void replay(Client *client, Game *game)
       offset += sprintf(display + offset, "\n");
 
       //Affichage des coordonnées des cases
-      for (int j = 0; j >= N_PITS - 1; j++)
+
+      offset += sprintf(display + offset, COLOR_YELLOW);
+
+      for (int j = 0; j < N_PITS / 2; j++)
       {
          offset += sprintf(display + offset, "  %d   ", j);
       }
@@ -1576,7 +1604,16 @@ static void replay(Client *client, Game *game)
 
       write_client(client->sock, display);
 
+      // On attend 1 seconde entre chaque affichage
+      sleep(1);
+
    }
+
+   // On indique au client que le replay est terminé
+
+   write_client(client->sock, COLOR_BOLD);
+   write_client(client->sock, "Replay finished!\n");
+   write_client(client->sock, COLOR_RESET);
 }
 
 int main()
