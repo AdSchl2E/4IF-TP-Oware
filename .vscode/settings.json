@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "*.tcc": "c",
-        "thread": "cpp"
+        "thread": "cpp",
+        "system_error": "c"
     }
 }

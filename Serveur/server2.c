@@ -173,21 +173,15 @@ static void app(void)
          offset = 0;
 
          /* notify other clients */
-         char joinMessage[BUF_SIZE];
-
          for (int i = 0; i < nClients; i++)
          {
             if (clients[i].sock != csock && nGames == 0)
             {
-               
-               offset += sprintf(joinMessage + offset, COLOR_YELLOW);
-               offset += sprintf(joinMessage + offset, COLOR_BOLD);
-               offset += sprintf(joinMessage + offset, client.name);
-               offset += sprintf(joinMessage + offset, " has joined the server!\n");
-               offset += sprintf(joinMessage + offset, COLOR_RESET);
-               write_client(clients[i].sock, joinMessage);
-               joinMessage[0] = '\0';
-               offset = 0;
+               write_client(clients[i].sock, COLOR_YELLOW);
+               write_client(clients[i].sock, COLOR_BOLD);
+               write_client(clients[i].sock, client.name);
+               write_client(clients[i].sock, " has joined the server!\n");
+               write_client(clients[i].sock, COLOR_RESET);
             }
             else
             {
@@ -195,14 +189,11 @@ static void app(void)
                {
                   if (!clients[i].playing && !clients[i].spectating && !clients[i].reviewing && clients[i].sock != csock)
                   {
-                     offset += sprintf(joinMessage + offset, COLOR_YELLOW);
-                     offset += sprintf(joinMessage + offset, COLOR_BOLD);
-                     offset += sprintf(joinMessage + offset, client.name);
-                     offset += sprintf(joinMessage + offset, " has joined the server!\n");
-                     offset += sprintf(joinMessage + offset, COLOR_RESET);
-                     write_client(clients[i].sock, joinMessage);
-                     joinMessage[0] = '\0';
-                     offset = 0;
+                     write_client(clients[i].sock, COLOR_YELLOW);
+                     write_client(clients[i].sock, COLOR_BOLD);
+                     write_client(clients[i].sock, client.name);
+                     write_client(clients[i].sock, " has joined the server!\n");
+                     write_client(clients[i].sock, COLOR_RESET);
                   }        
                }
             }
@@ -221,11 +212,13 @@ static void app(void)
                //// On affiche toutes les informations du client
                printf("========================================\n");
                printf("Client\n");
+               printf("Socket: %d\n", client->sock);
                printf("Name: %s\n", client->name);
                printf("Playing: %d\n", client->playing);
                printf("Spectating: %d\n", client->spectating);
                printf("Reviewing: %d\n", client->reviewing);
                printf("Receive challenge: %d\n", client->receiveChallenge);
+               printf("Send challenge: %d\n", client->sendChallenge);
                printf("Challenger: %d\n", client->challenger);
                printf("========================================\n");
 
@@ -282,6 +275,7 @@ static void app(void)
                         game.private = client->receiveChallenge == 2 ? 1 : 0;
 
                         client->receiveChallenge = 0;
+                        challenger->sendChallenge = 0;
 
                         // On initialise le plateau
                         initBoard(game.board, game.total_seeds_collected);
@@ -332,7 +326,21 @@ static void app(void)
                      }
                      else
                      {
+                        // On trouve le client qui a défié
+                        Client *challenger;
+
+                        for (int j = 0; j < nClients; j++)
+                        {
+                           if (clients[j].sock == client->challenger)
+                           {
+                              challenger = &clients[j];
+                              break;
+                           }
+                        }
+
+                        challenger->sendChallenge = 0;
                         client->receiveChallenge = 0;
+
                         write_client(client->challenger, COLOR_BOLD);
                         write_client(client->challenger, "Your challenge was declined!\n");
                         write_client(client->challenger, COLOR_RESET);
@@ -379,7 +387,7 @@ static void app(void)
 
                            write_client(clientGame->spectators[j]->sock, chatMessage);
                            
-                           message[0] = '\0';
+                           chatMessage[0] = '\0';
                            offset = 0;
                         }
                         
@@ -439,17 +447,17 @@ static void app(void)
                            else if (strcmp(buffer, "no") == 0 || strcmp(buffer, "n") == 0)
                            {
                               clientGame->draw = 0;
-                              write_client(clientGame->turn % 2 == 0 ? clientGame->player2->sock : clientGame->player2->sock, COLOR_BOLD);
-                              write_client(clientGame->turn % 2 == 0 ? clientGame->player1->sock : clientGame->player1->sock, COLOR_BOLD);
-                              write_client(clientGame->turn % 2 == 0 ? clientGame->player1->sock : clientGame->player1->sock, "Your opponent declined the draw!\n");
-                              write_client(clientGame->turn % 2 == 0 ? clientGame->player2->sock : clientGame->player2->sock, "You declined the draw!\n");
+                              write_client(clientGame->turn % 2 == 0 ? clientGame->player2->sock : clientGame->player1->sock, COLOR_BOLD);
+                              write_client(clientGame->turn % 2 == 0 ? clientGame->player1->sock : clientGame->player2->sock, COLOR_BOLD);
+                              write_client(clientGame->turn % 2 == 0 ? clientGame->player1->sock : clientGame->player2->sock, "Your opponent declined the draw!\n");
+                              write_client(clientGame->turn % 2 == 0 ? clientGame->player2->sock : clientGame->player1->sock, "You declined the draw!\n");
 
                               // On demande au joueur de jouer
 
-                              write_client(clientGame->turn % 2 == 0 ? clientGame->player1->sock : clientGame->player1->sock, "Choose a pit to play (0-5): ");
+                              write_client(clientGame->turn % 2 == 0 ? clientGame->player1->sock : clientGame->player2->sock, "Choose a pit to play (0-5): ");
 
-                              write_client(clientGame->turn % 2 == 0 ? clientGame->player1->sock : clientGame->player1->sock, COLOR_RESET);
-                              write_client(clientGame->turn % 2 == 0 ? clientGame->player2->sock : clientGame->player2->sock, COLOR_RESET);
+                              write_client(clientGame->turn % 2 == 0 ? clientGame->player1->sock : clientGame->player2->sock, COLOR_RESET);
+                              write_client(clientGame->turn % 2 == 0 ? clientGame->player2->sock : clientGame->player1->sock, COLOR_RESET);
                               break;
                            }
                            else
@@ -671,10 +679,10 @@ static void app(void)
 
                            write_client(game->spectators[j]->sock, chatMessage);
                            
-                           message[0] = '\0';
+                           chatMessage[0] = '\0';
                            offset = 0;
                         }
-                        message[0] = '\0';
+                        chatMessage[0] = '\0';
                         offset = 0;
                         offset += sprintf(chatMessage + offset, COLOR_CYAN);
                         offset += sprintf(chatMessage + offset, client->name);
@@ -742,6 +750,15 @@ static void app(void)
                   /* challenge a player */
                   else if (strncmp(buffer, "/challenge", 10) == 0)
                   {
+                     // On vérifie que le client n'envoit pas juste "/challenge"
+                     if (strlen(buffer) < 12)
+                     {
+                        write_client(client->sock, COLOR_RED);
+                        write_client(client->sock, "Invalid player name!\n");
+                        write_client(client->sock, "Syntax: /challenge <player>\n");
+                        write_client(client->sock, COLOR_RESET);
+                        break;
+                     }
                      char *player = buffer + 11;
 
                      // Le joueur ne peut pas se défier lui-même
@@ -757,7 +774,7 @@ static void app(void)
                      {
                         if (strcmp(clients[j].name, player) == 0)
                         {
-                           if (!clients[j].playing && !clients[j].spectating && !clients[j].reviewing && clients[j].receiveChallenge == 0)
+                           if (!clients[j].playing && !clients[j].spectating && !clients[j].reviewing && clients[j].receiveChallenge == 0 && clients[j].sendChallenge == 0)
                            {
                               char message[BUF_SIZE];
                               int offset = 0;
@@ -772,6 +789,7 @@ static void app(void)
                               write_client(client->sock, message);
 
                               clients[j].receiveChallenge = 1;
+                              client->sendChallenge = 1;
                               clients[j].challenger = client->sock;
 
                               message[0] = '\0';
@@ -810,6 +828,15 @@ static void app(void)
                   /* challenge a player for a private game */
                   else if (strncmp(buffer, "/pchallenge", 11) == 0)
                   {
+                     // On vérifie que le client n'envoit pas juste "/pchallenge"
+                     if (strlen(buffer) < 13)
+                     {
+                        write_client(client->sock, COLOR_RED);
+                        write_client(client->sock, "Invalid player name!\n");
+                        write_client(client->sock, "Syntax: /pchallenge <player>\n");
+                        write_client(client->sock, COLOR_RESET);
+                        break;
+                     }
                      char *player = buffer + 12;
 
                      // Le joueur ne peut pas se défier lui-même
@@ -929,6 +956,16 @@ static void app(void)
                   /* rewatch a game */
                   else if (strncmp(buffer, "/replay", 7) == 0)
                   {
+                     // On vérifie que le client n'envoit pas juste "/replay"
+                     if (strlen(buffer) < 9)
+                     {
+                        write_client(client->sock, COLOR_RED);
+                        write_client(client->sock, "Invalid game index!\n");
+                        write_client(client->sock, "Syntax: /replay <game index>\n");
+                        write_client(client->sock, COLOR_RESET);
+                        break;
+                     }
+
                      char *gameIndex = buffer + 8;
 
                      // On vérifie si l'index est valide
@@ -1069,6 +1106,15 @@ static void app(void)
                   /* spectate a game */
                   else if (strncmp(buffer, "/spectate", 9) == 0)
                   {
+                     // On vérifie que le client n'a pas juste envoyé /spectate
+                     if (strlen(buffer) < 11)
+                     {
+                        write_client(client->sock, COLOR_RED);
+                        write_client(client->sock, "Invalid command!\n");
+                        write_client(client->sock, "Syntax: /spectate <game index>\n");
+                        write_client(client->sock, COLOR_RESET);
+                        break;
+                     }
                      // Le client peut regarder une partie en cours si elle n'est pas finie et si elle n'est pas privée
                      // Si elle est privée, il peut regarder que si un des joueurs est son ami
 
@@ -1181,6 +1227,15 @@ static void app(void)
                   /* see the bio of a player */
                   else if (strncmp(buffer, "/seebio", 7) == 0)
                   {
+                     // On vérifie que le client n'a pas juste envoyé /seebio
+                     if (strlen(buffer) < 9)
+                     {
+                        write_client(client->sock, COLOR_RED);
+                        write_client(client->sock, "Invalid command!\n");
+                        write_client(client->sock, "Syntax: /seebio <player>\n");
+                        write_client(client->sock, COLOR_RESET);
+                        break;
+                     }
                      char *player = buffer + 8;
                      for (int j = 0; j < nClients; j++)
                      {
@@ -1207,6 +1262,16 @@ static void app(void)
                   // Ajouter un ami
                   else if (strncmp(buffer, "/friend", 7) == 0)
                   {
+                     // On vérifie que le client n'a pas juste envoyé /friend
+                     if (strlen(buffer) < 9)
+                     {
+                        write_client(client->sock, COLOR_RED);
+                        write_client(client->sock, "Invalid command!\n");
+                        write_client(client->sock, "Syntax: /friend <player>\n");
+                        write_client(client->sock, COLOR_RESET);
+                        break;
+                     }
+
                      char *player = buffer + 8;
 
                      // Un client ne peut pas s'ajouter lui-même en ami
@@ -1253,6 +1318,15 @@ static void app(void)
                   // Retirer un ami
                   else if (strncmp(buffer, "/unfriend", 9) == 0)
                   {
+                     // On vérifie que le client n'a pas juste envoyé /unfriend
+                     if (strlen(buffer) < 11)
+                     {
+                        write_client(client->sock, COLOR_RED);
+                        write_client(client->sock, "Invalid command!\n");
+                        write_client(client->sock, "Syntax: /unfriend <player>\n");
+                        write_client(client->sock, COLOR_RESET);
+                        break;
+                     }
                      char *player = buffer + 10;
 
                      // Un client ne peut pas se retirer lui-même de sa liste d'amis
@@ -1344,6 +1418,15 @@ static void app(void)
                   // Chuchoter un message a qqn
                   else if (strncmp(buffer, "/whisper", 8) == 0)
                   {
+                     // On vérifie que le client n'a pas juste envoyé /whisper
+                     if (strlen(buffer) < 10)
+                     {
+                        write_client(client->sock, COLOR_RED);
+                        write_client(client->sock, "Invalid command!\n");
+                        write_client(client->sock, "Syntax: /whisper <player> <message>\n");
+                        write_client(client->sock, COLOR_RESET);
+                        break;
+                     }  
                      char *player = buffer + 9;
                      char *message = strchr(player, ' ') + 1;
                      *strchr(player, ' ') = '\0';

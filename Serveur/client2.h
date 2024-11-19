@@ -12,6 +12,7 @@ typedef struct
    int spectating;
    int reviewing;
    int receiveChallenge;
+   int sendChallenge;
    SOCKET challenger;
    SOCKET* friends;
 } Client;

@@ -19,7 +19,7 @@ A tester avec plus de clients :
 
 - Si vous avez une version qui fonctionne pour une partie, Vérifiez que cela fonctionne pour plusieurs parties en jeu.
 (A tester avec vraiment beaucoup de clients)
-- Challenge croisé : A peut défier B, B peut défier C, C peut défier A. Vérifiez que cela fonctionne.
+
 
 A améliorer / paufiner :
 
@@ -42,15 +42,10 @@ Done :
 - Ajouter un mode privé: un joueur peut limiter la liste des observateurs à une liste d’amis. Implanter cette fonctionalité. (/friend pseudo) (/challenge pseudo -p) (/listfriends) (/unfriend pseudo) (/whisper pseudo message) (ajouter int private dans struct game)
 - refaire l'affiche de la déconnexion
 - Probleme avec l'affichage de qui à jouer quoi
+- Challenge croisé : A peut défier B, B peut défier C, C peut défier A. Vérifiez que cela fonctionne. (en gros faut empecher ça)
 
 
-
-J'ai eu une segfault en faisant un chat avec un spectateur, je sais pas si c'est un cas isolé ou si c'est un bug à corriger
-
-Idem aussi un bug avec draw, genre rejouez juste apres un draw -> bon c'est tres bizarre, genre c'est censé recréer une game mais ca reprend la meme qu'avant alors que celle d'avant je l'ai bien mit en finished jcrois c bon
-
-la réponse du draw n'est pas adapté selon le joueur TODO
-prblm avec message de join
 Voir aussi quand on met rien avec les options
 
 Teste de la mort avec les pointeurs dans les listede clients, si on kill un client en game, les autres games ne peuvent plus jouer
+Faire des getClientbyId pour eviter les pointeurs
