@@ -9,9 +9,7 @@ On fait la Grand Slam variation
 A faire : 
 
 
-- Ajouter un mode privé: un joueur peut limiter la liste des observateurs à une liste d’amis. Implanter cette fonctionalité. (/friend pseudo) (/challenge pseudo -p) (/listfriends) (/unfriend pseudo) (/whisper pseudo message) (ajouter int private dans struct game)
-- refaire l'affiche de la déconnexion
-- Probleme avec l'affichage de qui à jouer quoi
+
 - Gérer les cas ou on met rien apres les commandes (/challenge) (/friend) (/unfriend) (/whisper) etc
 - Libre à vore imagination: classement des joueurs : article wikipedia sur le classement elo, organisation de tournois, adapter pour un autre jeu etc. (aled)
 
@@ -25,7 +23,6 @@ A tester avec plus de clients :
 
 A améliorer / paufiner :
 
-- Ajouter la fonctionnalité de sauvegarde de partie jouée pour pouvoir la regarder par la suite.
 - Affichage console
 
 Done : 
@@ -41,8 +38,19 @@ Done :
 - Implanter une option de chat : les joueurs en plus d’envoyer des coups à peuvent échanger des messages pour discuter (dans et en dehors d’une partie). (/msg message)
 - Faut ecrire aux specs qui a gagné et qui a perdu / draw et corriger affichage coup précedent et quand c''est fini faut proposer au spec de parrtir
 - Un mode “observateur” pour lequel le serveur envoie le plateau et le score à C qui observe la partie entre A et B.
-
+- Ajouter la fonctionnalité de sauvegarde de partie jouée pour pouvoir la regarder par la suite.
+- Ajouter un mode privé: un joueur peut limiter la liste des observateurs à une liste d’amis. Implanter cette fonctionalité. (/friend pseudo) (/challenge pseudo -p) (/listfriends) (/unfriend pseudo) (/whisper pseudo message) (ajouter int private dans struct game)
+- refaire l'affiche de la déconnexion
+- Probleme avec l'affichage de qui à jouer quoi
 
 
 
 J'ai eu une segfault en faisant un chat avec un spectateur, je sais pas si c'est un cas isolé ou si c'est un bug à corriger
+
+Idem aussi un bug avec draw, genre rejouez juste apres un draw -> bon c'est tres bizarre, genre c'est censé recréer une game mais ca reprend la meme qu'avant alors que celle d'avant je l'ai bien mit en finished jcrois c bon
+
+la réponse du draw n'est pas adapté selon le joueur TODO
+prblm avec message de join
+Voir aussi quand on met rien avec les options
+
+Teste de la mort avec les pointeurs dans les listede clients, si on kill un client en game, les autres games ne peuvent plus jouer

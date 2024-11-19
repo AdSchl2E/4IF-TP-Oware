@@ -77,6 +77,7 @@ static void write_client(SOCKET sock, const char *buffer);
 static void send_message_to_all_clients(Client *clients, Client *client, int actual, const char *buffer, char from_server);
 static void remove_client(Client *clients, int to_remove, int *actual);
 static void clear_clients(Client *clients, int actual);
+static void clear_games(Game *games, int actual);
 static void displayBoardToPlayer(Game *game);
 static void displayBoardToSpectator(Game *game);
 static void replay(Client *client, Game *game);  
