@@ -1,5 +1,10 @@
 # 4IF-TP-Oware
 
+## Auteurs
+
+- [Adam Schlee](https://github.com/AdSchl2E)
+- [Louis Kusno](https://github.com/howdrox)
+
 ## Présentation
 
 Ce projet a été réalisé dans le cadre du cours de programmation réseau à l'INSA de Lyon. Il s'agit d'une implémentation du jeu Awalé (Oware) en C.
