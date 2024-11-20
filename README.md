@@ -13,3 +13,4 @@ Pour lancer le serveur, il suffit de lancer la commande `./serveur`.
 ### Client
 Pour compiler le projet, il suffit de se placer dans le répertoire `Client` et de lancer la commande `make`.
 Pour lancer le client, il suffit de lancer la commande `./client <ip adress> <pseudo>`
+Si c'est sur le même ordinateur, vous pouvez utiliser l'adresse `127.0.0.1`.
