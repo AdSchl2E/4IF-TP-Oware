@@ -106,6 +106,38 @@ static void app(void)
             client.friends[i] = INVALID_SOCKET;
          }
          
+         // Si le client qui se connecte à un nom qui existe déjà ou si son nom est vide, on lui demande de se connecter avec un autre nom
+         
+         int nameExistsOrNull = 0;
+
+         do 
+         {
+            nameExistsOrNull = 0;
+            for (int i = 0; i < nClients; i++)
+            {
+               if (strcmp(clients[i].name, buffer) == 0)
+               {
+                  nameExistsOrNull = 1;
+                  write_client(csock, COLOR_RED);
+                  write_client(csock, COLOR_BOLD);
+                  write_client(csock, "This name is already taken, please choose another one: ");
+                  write_client(csock, COLOR_RESET);
+                  read_client(csock, buffer);
+                  break;
+               }
+               else if (strlen(buffer) == 0)
+               {
+                  nameExistsOrNull = 1;
+                  write_client(csock, COLOR_RED);
+                  write_client(csock, COLOR_BOLD);
+                  write_client(csock, "Name cannot be empty, please choose another one: ");
+                  write_client(csock, COLOR_RESET);
+                  read_client(csock, buffer);
+                  break;
+               }
+            }
+         } while (nameExistsOrNull);        
+
          strncpy(client.bio, "This player has no bio", BUF_SIZE - 1);
          strncpy(client.name, buffer, BUF_SIZE - 1);
 
@@ -226,8 +258,58 @@ static void app(void)
                /* client disconnected */
                if(c == 0)
                {
-                  closesocket(clients[i].sock);
-                  remove_client(clients, i, &nClients);
+                  // On vérifie si le client était en train de jouer ou de regarder une partie, si c'est le cas, on arrête la partie et on informe les joueurs
+                  // On décale également les pointeurs des clients situés après le client qui s'est déconnecté afin qu'une partie ne change pas de joueur en cours de partie
+
+                  for (int j = 0; j < nGames; j++)
+                  {
+                     if (games[j].player1->sock == client->sock || games[j].player2->sock == client->sock)
+                     {
+                        // On cherche le joueur correspondant au client qui s'est déconnecté
+                        Client* player;
+                        Client* opponent;
+
+                        if (games[j].player1->sock == client->sock)
+                        {
+                           player = games[j].player1;
+                           opponent = games[j].player2;
+                        }
+                        else
+                        {
+                           player = games[j].player2;
+                           opponent = games[j].player1;
+                        }
+
+                        games[j].finished = 1;
+                        opponent->playing = 0;
+                        char message[BUF_SIZE];
+                        sprintf(message, COLOR_BOLD);
+                        sprintf(message, "Game finished! %s disconnected!\n", player->name);
+
+                        write_client(opponent->sock, COLOR_RED);
+                        write_client(opponent->sock, "You opponent disconnected!\nThe game is finished!\n");
+                        write_client(opponent->sock, COLOR_RESET);
+
+                        for (int k = 0; k < games[j].nSpectators; k++)
+                        {
+                           write_client(games[j].spectators[k]->sock, message);
+                           write_client(games[j].spectators[k]->sock, COLOR_BOLD);
+                           write_client(games[j].spectators[k]->sock, "You can leave the game by typing 'q'\n");
+                           write_client(games[j].spectators[k]->sock, COLOR_RESET);
+                        }
+                        displayBoardToPlayer(&games[j]);
+                        displayBoardToSpectator(&games[j]);
+                        break;
+                     }
+                  }
+
+                  clients[i].sock = INVALID_SOCKET;
+                  
+                  for (int j = 0; j < MAX_FRIENDS; j++)
+                  {
+                     clients[i].friends[j] = INVALID_SOCKET;
+                  }
+
                   char disconnectMessage[BUF_SIZE];
                   int offset = 0;
                   offset += sprintf(disconnectMessage + offset, COLOR_YELLOW);
@@ -237,6 +319,8 @@ static void app(void)
                   offset += sprintf(disconnectMessage + offset, COLOR_RESET);
                   
                   send_message_to_all_clients(clients, client, nClients, disconnectMessage, 1);
+
+                  clients[i].name[0] = '\0';
                }
                else
                {
@@ -735,7 +819,7 @@ static void app(void)
                            offset += sprintf(players + offset, COLOR_RESET);
                            
                         }
-                        else
+                        else if (clients[j].sock != INVALID_SOCKET)
                         {
                            offset += sprintf(players + offset, COLOR_CYAN);
                            offset += sprintf(players + offset, clients[j].name);
@@ -1583,10 +1667,11 @@ static void clear_games(Game *games, int nGames)
 
 static void remove_client(Client *clients, int to_remove, int *nClients)
 {
-   /* we remove the client in the array */
-   memmove(clients + to_remove, clients + to_remove + 1, (*nClients - to_remove - 1) * sizeof(Client));
-   /* number client - 1 */
-   (*nClients)--;
+   // /* we remove the client in the array */
+   // memmove(clients + to_remove, clients + to_remove + 1, (*nClients - to_remove - 1) * sizeof(Client));
+   // /* number client - 1 */
+   // (*nClients)--;
+   // // On décale tout les pointeurs des clients positionnés après lui
 }
 
 static void send_message_to_all_clients(Client *clients, Client *sender, int nClients, const char *buffer, char from_server)
