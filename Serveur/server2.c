@@ -136,7 +136,7 @@ static void app(void)
                   break;
                }
             }
-         } while (nameExistsOrNull);        
+         } while (nameExistsOrNull);       
 
          strncpy(client.bio, "This player has no bio", BUF_SIZE - 1);
          strncpy(client.name, buffer, BUF_SIZE - 1);
@@ -204,16 +204,22 @@ static void app(void)
          write_client(clients[i].sock, commands);
          offset = 0;
 
+         char message[BUF_SIZE];
+
          /* notify other clients */
          for (int i = 0; i < nClients; i++)
          {
             if (clients[i].sock != csock && nGames == 0)
             {
-               write_client(clients[i].sock, COLOR_YELLOW);
-               write_client(clients[i].sock, COLOR_BOLD);
-               write_client(clients[i].sock, client.name);
-               write_client(clients[i].sock, " has joined the server!\n");
-               write_client(clients[i].sock, COLOR_RESET);
+               offset += sprintf(message + offset, COLOR_YELLOW); 
+               offset += sprintf(message + offset, COLOR_BOLD);
+               offset += sprintf(message + offset, client.name);
+               offset += sprintf(message + offset, " has joined the server!\n");
+               offset += sprintf(message + offset, COLOR_RESET);
+
+               write_client(clients[i].sock, message);
+               message[0] = '\0';
+               offset = 0;
             }
             else
             {
@@ -221,11 +227,15 @@ static void app(void)
                {
                   if (!clients[i].playing && !clients[i].spectating && !clients[i].reviewing && clients[i].sock != csock)
                   {
-                     write_client(clients[i].sock, COLOR_YELLOW);
-                     write_client(clients[i].sock, COLOR_BOLD);
-                     write_client(clients[i].sock, client.name);
-                     write_client(clients[i].sock, " has joined the server!\n");
-                     write_client(clients[i].sock, COLOR_RESET);
+                     offset += sprintf(message + offset, COLOR_YELLOW);
+                     offset += sprintf(message + offset, COLOR_BOLD);
+                     offset += sprintf(message + offset, client.name);
+                     offset += sprintf(message + offset, " has joined the server!\n");
+                     offset += sprintf(message + offset, COLOR_RESET);
+
+                     write_client(clients[i].sock, message);
+                     message[0] = '\0';
+                     offset = 0;
                   }        
                }
             }
@@ -241,25 +251,11 @@ static void app(void)
             {
                Client* client = &clients[i];
 
-               //// On affiche toutes les informations du client
-               printf("========================================\n");
-               printf("Client\n");
-               printf("Socket: %d\n", client->sock);
-               printf("Name: %s\n", client->name);
-               printf("Playing: %d\n", client->playing);
-               printf("Spectating: %d\n", client->spectating);
-               printf("Reviewing: %d\n", client->reviewing);
-               printf("Receive challenge: %d\n", client->receiveChallenge);
-               printf("Send challenge: %d\n", client->sendChallenge);
-               printf("Challenger: %d\n", client->challenger);
-               printf("========================================\n");
-
                int c = read_client(clients[i].sock, buffer);
                /* client disconnected */
                if(c == 0)
                {
                   // On vérifie si le client était en train de jouer ou de regarder une partie, si c'est le cas, on arrête la partie et on informe les joueurs
-                  // On décale également les pointeurs des clients situés après le client qui s'est déconnecté afin qu'une partie ne change pas de joueur en cours de partie
 
                   for (int j = 0; j < nGames; j++)
                   {
@@ -282,6 +278,10 @@ static void app(void)
 
                         games[j].finished = 1;
                         opponent->playing = 0;
+
+                        displayBoardToPlayer(&games[j]);
+                        displayBoardToSpectator(&games[j]);
+                        
                         char message[BUF_SIZE];
                         sprintf(message, COLOR_BOLD);
                         sprintf(message, "Game finished! %s disconnected!\n", player->name);
@@ -297,18 +297,11 @@ static void app(void)
                            write_client(games[j].spectators[k]->sock, "You can leave the game by typing 'q'\n");
                            write_client(games[j].spectators[k]->sock, COLOR_RESET);
                         }
-                        displayBoardToPlayer(&games[j]);
-                        displayBoardToSpectator(&games[j]);
                         break;
                      }
                   }
 
-                  clients[i].sock = INVALID_SOCKET;
-                  
-                  for (int j = 0; j < MAX_FRIENDS; j++)
-                  {
-                     clients[i].friends[j] = INVALID_SOCKET;
-                  }
+                  remove_client(clients, i, &nClients);
 
                   char disconnectMessage[BUF_SIZE];
                   int offset = 0;
@@ -319,8 +312,6 @@ static void app(void)
                   offset += sprintf(disconnectMessage + offset, COLOR_RESET);
                   
                   send_message_to_all_clients(clients, client, nClients, disconnectMessage, 1);
-
-                  clients[i].name[0] = '\0';
                }
                else
                {
@@ -1667,11 +1658,10 @@ static void clear_games(Game *games, int nGames)
 
 static void remove_client(Client *clients, int to_remove, int *nClients)
 {
-   // /* we remove the client in the array */
-   // memmove(clients + to_remove, clients + to_remove + 1, (*nClients - to_remove - 1) * sizeof(Client));
-   // /* number client - 1 */
-   // (*nClients)--;
-   // // On décale tout les pointeurs des clients positionnés après lui
+   /* we remove the client in the array */
+   memmove(clients + to_remove, clients + to_remove + 1, (*nClients - to_remove - 1) * sizeof(Client));
+   /* number client - 1 */
+   (*nClients)--;
 }
 
 static void send_message_to_all_clients(Client *clients, Client *sender, int nClients, const char *buffer, char from_server)
